@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.colors import LogNorm
 
 
 def get_array():
@@ -7,48 +8,55 @@ def get_array():
     y_len = int(input('Number of rows:'))
 
     arr = []
-    for y in range(x_len):
-        row = []
-        for x in range(y_len):
-            row.append(float(input().strip()))
-        arr.append(row)
+    for x in range(x_len):
+        col = []
+        for y in range(y_len):
+            col.append(float(input().strip()))
+        arr.append(col)
 
-    return arr
+    return y_len, x_len, np.transpose(arr)
 
 
-signal = get_array()
+rows, cols, signal = get_array()
 
+print('\nPerforming Fourier Transform...')
 spectrum = np.fft.fft2(signal)
 magnitude = np.abs(spectrum)
-phase = np.angle(spectrum)
+power = np.abs(spectrum) ** 2
 
-plt.subplot(2, 2, 1)
+# show signal
+print('Generating signal colormap')
 plt.imshow(signal, cmap='jet')
-plt.title('signal')
+plt.savefig('signal.png', bbox_inches='tight')
 
-plt.subplot(2, 2, 2)
-plt.imshow(magnitude, cmap='jet')
+# show amplitude and power spectrum
+print('Generating amplitude and power spectra logarithmic colormaps...')
+plt.subplot(1, 2, 1)
+plt.imshow(magnitude, norm=LogNorm(vmin=5))
 plt.title('amplitude spectrum')
 
-"""
-plt.subplot(2, 3, 3)
-plt.imshow(phase, cmap='jet')
-plt.title('phase spectrum')
-"""
+plt.subplot(1, 2, 2)
+plt.imshow(power, norm=LogNorm(vmin=5))
+plt.title('power spectrum')
 
-r, c = spectrum.shape
+plt.savefig('spectrum.png', bbox_inches='tight')
+
+print('Generating filtered spectrum...')
 fraction = 0.1
-spectrum[int(r*fraction):int(r*(1-fraction))] = 0
-spectrum[:, int(c*fraction):int(c*(1-fraction))] = 0
+filtered = spectrum.copy()
+filtered[int(rows*fraction):int(rows*(1-fraction))] = 0
+filtered[:, int(cols*fraction):int(cols*(1-fraction))] = 0
 
-plt.subplot(2, 2, 3)
-plt.imshow(np.abs(spectrum), cmap='jet')
+plt.subplot(1, 1, 1)
+plt.imshow(np.abs(filtered), norm=LogNorm(vmin=5))
 plt.title('filtered spectrum')
+plt.savefig('filtered.png', bbox_inches='tight')
 
-inverse = np.fft.ifft2(spectrum).real
+print('Performing inverse Fourier Transform...')
+inverse = np.fft.ifft2(filtered).real
 
-plt.subplot(2, 2, 4)
 plt.title('inverse')
 plt.imshow(inverse, cmap='jet')
+plt.savefig('inverse.png', bbox_inches='tight')
 
-plt.show()
+print('Done!')
